@@ -58,7 +58,10 @@ class KalmanFilter(object):
         up_mu_k = self.mu_k + sigma_c @ cov_inv @ meas_err
         up_sigma_k = self.sigma_k - sigma_c @ cov_inv @ (self.C_k @ self.sigma_k)
         
-        return up_mu_k, up_sigma_k
+        self.mu_k = up_mu_k
+        self.sigma_k = up_sigma_k
+        
+        # return up_mu_k, up_sigma_k
     
     def predict(self):
         """
@@ -80,4 +83,4 @@ class KalmanFilter(object):
         self.mu_k = new_mu_k
         self.sigma_k = new_sigma_k
         
-        return hit_ground
+        return hit_ground, new_mu_k, new_sigma_k

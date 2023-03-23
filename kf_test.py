@@ -1,28 +1,6 @@
 from kalman_filter import KalmanFilter
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from util import plot_points, accuracy
 
-
-def plot_points(points, points2):
-    # Create a 3D plot
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-
-    # Add the points to the plot
-    for point in points:
-        ax.scatter(point[0], point[1], point[2], c='b', marker='o')
-    
-    # Add the second set of points to the plot
-    for point in points2:
-        ax.scatter(point[0], point[1], point[2], c='r', marker='^')
-
-    # Set the labels for the axes
-    ax.set_xlabel('X Label')
-    ax.set_ylabel('Y Label')
-    ax.set_zlabel('Z Label')
-
-    # Show the plot
-    plt.show()
     
 kf = KalmanFilter(60)
 
@@ -64,4 +42,6 @@ for point in measurements:
 print(f'Ball hit floor {count} times')
 print(f'Predicted points {kf_points}')
 
-plot_points(measurements, kf_points)
+plot_points(kf_points, measurements)
+accur = accuracy(kf_points, measurements)
+print(accur)

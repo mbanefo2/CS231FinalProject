@@ -58,9 +58,15 @@ class Camera(object):
         ray /= np.linalg.norm(ray)
         print(ray)
         
-        # Convert to camera coordinate system
-        camera_ray = np.matmul(self.extrinsic_matrix[:, :3], ray) + self.extrinsic_matrix[:, 3]
-        return camera_ray
+        X = ray[0]
+        Y = ray[1]
+        Z = self.camera_position[2]
+        p_camera = np.array([X, Y, Z, 1])
+        p_world = np.dot(np.linalg.inv(self.extrinsic_matrix), p_camera)
+        print(p_world)
+        # # Convert to camera coordinate system
+        # camera_ray = np.matmul(self.extrinsic_matrix[:, :3], ray) + self.extrinsic_matrix[:, 3]
+        return p_world
     
     def camera_to_image(self, camera_point):
         P = np.dot(self.camera_matrix, self.extrinsic_matrix)

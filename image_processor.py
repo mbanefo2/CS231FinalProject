@@ -2,16 +2,20 @@ import cv2
 import os
 import numpy as np
 
-class CourtFinder(object):
-	def __init__(self, filepath, result_path, debug=True):
+class ImageProcessor(object):
+	def __init__(self, filepath, result_path, debug=False):
 		self.corners = []
 		self.found_corners = False
 		self.debug = debug
 		self.filepath = filepath
 		self.result_path = result_path
         
-		if not os.path.isdir(self.result_path):
-			os.makedirs(self.result_path)
+		if self.debug and not self.result_path:
+			raise ValueError('Must provide result path')
+        
+		if self.result_path:
+			if not os.path.isdir(self.result_path):
+				os.makedirs(self.result_path)
             
 		self.original_img = cv2.imread(filepath)
 		self.height, self.width = self.original_img.shape[:2]

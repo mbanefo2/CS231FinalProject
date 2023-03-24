@@ -1,5 +1,3 @@
-# from filterpy.kalman import KalmanFilter
-# from filterpy.common import Q_discrete_white_noise
 import numpy as np
 
 
@@ -16,22 +14,37 @@ class KalmanFilter(object):
     Args:
         object (Class): Kalman filter
     """
-    def __init__(self, framerate):
+    def __init__(self, framerate=60, coor_space='image'):
         # shuttlecock parameters
         self.accel_gravity = -9.8 # Acceleration due to gravity
         self.shuttle_mass = 0.005 # Average weight of a badminton shuttlecock in kg
         self.dt = 1.0 / framerate
         
-        # Initialize state estimation parameters
-        self.mu_k = np.zeros((6, 1)) # Initial estimate of the mean of the shuttlecock state
-        self.sigma_k = np.eye(6) * 100.0 # Initial estimate of the covariance of the shuttlecock state
-        self.Q = np.identity(6) * self.dt # Model noise covariance
-        self.R = 0.05 * np.identity(3) # Measurement noise covariance, threshold for ray intersect distance
+        # Sets which coordinate space we are working in
+        # image for 2D KF predictions and other for 3D predictions
+        self.coor_space = coor_space
+        
+        if self.coor_space == 'image':
+            self.mu_k = np.zeros((4, 1)) # Initial estimate of the mean of the shuttlecock state
+            self.sigma_k = np.eye(4) * 100.0 # Initial estimate of the covariance of the shuttlecock state
+            self.Q = np.identity(4) * self.dt # Model noise covariance
+            self.R = 0.05 * np.identity(2) # Measurement noise covariance
 
-        # Initialize the matrices for the shuttlecock dynamics and the measurement model
-        self.A_k = np.identity(6) + np.eye(6, k=3) * self.dt # Dynamics matrix
-        self.Bk_uk = np.array([[0], [0.5 * self.accel_gravity * self.dt * self.dt], [0], [0], [self.accel_gravity * self.dt], [0]]) # Control input matrix
-        self.C_k = np.hstack((np.identity(3), np.zeros((3, 3)))) # Measurement matrix
+            # Initialize the matrices for the shuttlecock dynamics and the measurement model
+            # 2D predictions do not need control input matrix as no gravity factor
+            self.A_k = np.identity(4) + np.eye(4, k=2) * self.dt # Dynamics matrix
+            self.C_k = np.hstack((np.identity(2), np.zeros((2, 2)))) # Measurement matrix
+        else:
+            # Initialize state estimation parameters
+            self.mu_k = np.zeros((6, 1)) # Initial estimate of the mean of the shuttlecock state
+            self.sigma_k = np.eye(6) * 100.0 # Initial estimate of the covariance of the shuttlecock state
+            self.Q = np.identity(6) * self.dt # Model noise covariance
+            self.R = 0.05 * np.identity(3) # Measurement noise covariance, threshold for ray intersect distance
+
+            # Initialize the matrices for the shuttlecock dynamics and the measurement model
+            self.A_k = np.identity(6) + np.eye(6, k=3) * self.dt # Dynamics matrix
+            self.Bk_uk = np.array([[0], [0.5 * self.accel_gravity * self.dt * self.dt], [0], [0], [self.accel_gravity * self.dt], [0]]) # Control input matrix
+            self.C_k = np.hstack((np.identity(3), np.zeros((3, 3)))) # Measurement matrix
     
     def update(self, measured_pos):
         """
@@ -44,7 +57,10 @@ class KalmanFilter(object):
         :returns up_sigma_k (matrix): New Covariance matrix of the shuttlecock state
         """
         # Reshape the measurement vector
-        measured_pos = np.reshape(measured_pos, (3,1))
+        if self.coor_space == 'image':
+            measured_pos = np.reshape(measured_pos, (2,1))
+        else:
+            measured_pos = np.reshape(measured_pos, (3,1))
         
         # Compute covariances of the measurements
         cov = self.C_k @ self.sigma_k @ self.C_k.T + self.R
@@ -57,6 +73,9 @@ class KalmanFilter(object):
         # Update estimates and state covariances
         up_mu_k = self.mu_k + sigma_c @ cov_inv @ meas_err
         up_sigma_k = self.sigma_k - sigma_c @ cov_inv @ (self.C_k @ self.sigma_k)
+        
+        self.mu_k = up_mu_k
+        self.sigma_k = up_sigma_k
         
         return up_mu_k, up_sigma_k
     
@@ -71,13 +90,21 @@ class KalmanFilter(object):
         
         # Update state covariance and state estimate
         new_sigma_k = self.A_k @ self.sigma_k @ self.A_k.T + self.Q
-        new_mu_k = self.A_k @ self.mu_k + self.Bk_uk
         
-        # Check if the position hits the ground, setting a small postive threshold value to account for noise
-        if new_mu_k[1] <= 0.05:
-            hit_ground = True
+        if self.coor_space == 'image': 
+            new_mu_k = self.A_k @ self.mu_k
+        else:
+            new_mu_k = self.A_k @ self.mu_k + self.Bk_uk
+        
+        if self.coor_space != 'image':
+            # Check if the position hits the ground, setting a small postive threshold value to account for noise
+            if new_mu_k[1] <= 0.05:
+                hit_ground = True
         
         self.mu_k = new_mu_k
         self.sigma_k = new_sigma_k
         
-        return hit_ground
+        # if self.coor_space != 'image':
+        #     return hit_ground, new_mu_k, new_sigma_k
+        # else:
+        #     return new_mu_k, new_sigma_k

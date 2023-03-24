@@ -1,7 +1,7 @@
 # CS231_final_project
 This repo contains code for CS231A Final Project Trajectory detection and boundary estimation for badminton shuttlecock using 3D position estimation
 
-To setup and run inference on our YOLO network. Use the following
+To setup and run inference on our YOLOv5 trained network. Use the following
 
 ```
 from roboflow import Roboflow

@@ -18,3 +18,11 @@ print(model.predict("your_image.jpg", confidence=40, overlap=30).json())
 # infer on an image hosted elsewhere
 # print(model.predict("URL_OF_YOUR_IMAGE", hosted=True, confidence=40, overlap=30).json())
 ```
+
+After that you can put your innference outputs into the main.py file along with the paths to the image you want to test on
+
+Then run the following command
+
+```
+python3 main.py
+```

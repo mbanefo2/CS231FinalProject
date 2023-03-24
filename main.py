@@ -70,7 +70,7 @@ for i in range(len(kf_points)):
     result_kf_points.append([kf_points[i][:2][0][0], kf_points[i][:2][1][0]])
 
 # Plot predicted vs measured points
-# plot_points_2D(result_kf_points, unique_yolo_measurements)
+plot_points_2D(result_kf_points, unique_yolo_measurements)
 
 accuracy = compute_accuracy(result_kf_points, unique_yolo_measurements, 10)
 print(f'Accuracy of Kalman Filter {accuracy}')
